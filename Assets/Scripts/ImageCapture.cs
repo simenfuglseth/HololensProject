@@ -77,6 +77,7 @@ public class ImageCapture : MonoBehaviour
             /// </summary>
     private void ExecuteImageCaptureAndAnalysis()
     {
+
         // Create a label in world space using the ResultsLabel class 
         // Invisible at this point but correctly positioned where the image was taken
         SceneOrganiser.Instance.PlaceAnalysisLabel();

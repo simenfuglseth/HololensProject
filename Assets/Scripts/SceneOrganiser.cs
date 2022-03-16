@@ -100,15 +100,11 @@ public class SceneOrganiser : MonoBehaviour
         // Create a sphere as new cursor
         GameObject newLabel = new GameObject();
 
-        // Resize the new cursor
-        newLabel.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
 
         // Creating the text of the label
         TextMesh t = newLabel.AddComponent<TextMesh>();
-        t.anchor = TextAnchor.MiddleCenter;
-        t.alignment = TextAlignment.Center;
-        t.fontSize = 50;
-        t.text = "";
+
 
         return newLabel;
     }
@@ -118,15 +114,18 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     public void PlaceAnalysisLabel()
     {
+        //Destroy previous quad
+        Destroy(quad);
+        
         lastLabelPlaced = Instantiate(label.transform, cursor.transform.position, transform.rotation);
         lastLabelPlacedText = lastLabelPlaced.GetComponent<TextMesh>();
         lastLabelPlacedText.text = "";
-        lastLabelPlaced.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
+        lastLabelPlaced.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         // Create a GameObject to which the texture can be applied
         quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quadRenderer = quad.GetComponent<Renderer>();
-        //Material m = new Material(Shader.Find("Transparent/Diffuse"));
+        //Material m = new Material(Shader.Find("Diffuse"));
         //quadRenderer.material = m;
 
         // Makes quad invincible
@@ -139,8 +138,8 @@ public class SceneOrganiser : MonoBehaviour
         quad.transform.parent = transform;
         quad.transform.rotation = transform.rotation;
 
-        // The quad is positioned slightly forward in font of the user
-        quad.transform.localPosition = new Vector3(0.0f, 0.0f, 3.0f);
+        // The quad is positioned slightly forward in front of the user
+        quad.transform.localPosition = new Vector3(0.0f, 0.0f, 1.0f);
 
         // The quad scale as been set with the following value following experimentation,  
         // to allow the image on the quad to be as precisely imposed to the real world as possible
