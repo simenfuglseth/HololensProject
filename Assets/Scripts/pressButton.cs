@@ -17,6 +17,7 @@ public class pressButton : MonoBehaviour, IMixedRealityPointerHandler
 
     public void OnPointerClicked(MixedRealityPointerEventData eventData)
     {
+        Debug.Log("Button pressed");
         ImageCapture.Instance.Invoke("ExecuteImageCaptureAndAnalysis", 0);
     }
 

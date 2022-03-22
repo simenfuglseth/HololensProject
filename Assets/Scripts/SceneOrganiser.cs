@@ -34,7 +34,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Reduce this value to display the recognition more often
     /// </summary>
     internal float probabilityThreshold = 0.3f;
-
+    public Transform target;
     /// <summary>
     /// The quad object hosting the imposed image captured
     /// </summary>
@@ -48,8 +48,10 @@ public class SceneOrganiser : MonoBehaviour
     /// <summary>
     /// Called on initialization
     /// </summary>
+
     private void Awake()
     {
+        
         // Use this class instance as singleton
         Instance = this;
 
@@ -102,12 +104,11 @@ public class SceneOrganiser : MonoBehaviour
 
         // Resize the new cursor
         newLabel.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-
         // Creating the text of the label
         TextMesh t = newLabel.AddComponent<TextMesh>();
         t.anchor = TextAnchor.MiddleCenter;
         t.alignment = TextAlignment.Center;
-        t.fontSize = 50;
+        t.fontSize = 100;
         t.text = "";
 
         return newLabel;
@@ -118,16 +119,16 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     public void PlaceAnalysisLabel()
     {
+        //Destroy previous quad
+        //Destroy(quad);
+        
         lastLabelPlaced = Instantiate(label.transform, cursor.transform.position, transform.rotation);
-        lastLabelPlacedText = lastLabelPlaced.GetComponent<TextMesh>();
-        lastLabelPlacedText.text = "";
+
         lastLabelPlaced.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
 
         // Create a GameObject to which the texture can be applied
         quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quadRenderer = quad.GetComponent<Renderer>();
-        //Material m = new Material(Shader.Find("Transparent/Diffuse"));
-        //quadRenderer.material = m;
 
         // Makes quad invincible
         quad.GetComponent<Renderer>().enabled = false;
@@ -135,11 +136,12 @@ public class SceneOrganiser : MonoBehaviour
         float transparency = 0f;
         quadRenderer.material.color = new Color(1, 1, 1, transparency);
 
+
         // Set the position and scale of the quad depending on user position
         quad.transform.parent = transform;
         quad.transform.rotation = transform.rotation;
 
-        // The quad is positioned slightly forward in font of the user
+        // The quad is positioned slightly forward in front of the user
         quad.transform.localPosition = new Vector3(0.0f, 0.0f, 3.0f);
 
         // The quad scale as been set with the following value following experimentation,  
@@ -152,6 +154,7 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     public void FinaliseLabel(AnalysisRootObject analysisObject)
     {
+        
         if (analysisObject.predictions != null)
         {
             lastLabelPlacedText = lastLabelPlaced.GetComponent<TextMesh>();
@@ -173,8 +176,22 @@ public class SceneOrganiser : MonoBehaviour
 
                 // Set the tag text
                 lastLabelPlacedText.text = bestPrediction.tagName;
+                // Cast a ray from the user's head to the currently placed label, it should hit the object detected by the Service.
+                // At that point it will reposition the label where the ray HL sensor collides with the object,
+                // (using the HL spatial tracking)
+                Debug.Log("Repositioning Label");
+                Vector3 headPosition = Camera.main.transform.position;
+                RaycastHit objHitInfo;
+                Vector3 objDirection = lastLabelPlaced.position;
 
+                if (Physics.Raycast(headPosition, objDirection, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
+                {
+                    lastLabelPlaced.position = objHitInfo.point;
 
+                }
+                
+                Debug.Log(objHitInfo.distance);
+                Debug.Log(objHitInfo.point);
             }
         }
         // Reset the color of the cursor
@@ -193,7 +210,7 @@ public class SceneOrganiser : MonoBehaviour
         Debug.Log($"BB: left {boundingBox.left}, top {boundingBox.top}, width {boundingBox.width}, height {boundingBox.height}");
 
         double centerFromLeft = boundingBox.left + (boundingBox.width / 2);
-        double centerFromTop = boundingBox.top + (boundingBox.height / 2);
+        double centerFromTop = (boundingBox.height / 2);
         Debug.Log($"BB CenterFromLeft {centerFromLeft}, CenterFromTop {centerFromTop}");
 
         double quadWidth = b.size.normalized.x;
@@ -204,5 +221,6 @@ public class SceneOrganiser : MonoBehaviour
         double normalisedPos_Y = (quadHeight * centerFromTop) - (quadHeight / 2);
 
         return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
+
     }
 }
