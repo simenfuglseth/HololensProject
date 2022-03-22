@@ -46,7 +46,7 @@ public class CustomVisionAnalyser : MonoBehaviour
         Debug.Log("Analyzing...");
 
         WWWForm webForm = new WWWForm();
-        Debug.Log(imagePath);
+        //Debug.Log(imagePath);
         using (UnityWebRequest unityWebRequest = UnityWebRequest.Post(predictionEndpoint, webForm))
         {
             // Gets a byte array out of the saved image
@@ -64,10 +64,10 @@ public class CustomVisionAnalyser : MonoBehaviour
 
             // Send the request
             yield return unityWebRequest.SendWebRequest();
-            Debug.Log(unityWebRequest);
+            //Debug.Log(unityWebRequest);
             string jsonResponse = unityWebRequest.downloadHandler.text;
 
-            Debug.Log("response: " + jsonResponse);
+            //Debug.Log("response: " + jsonResponse);
 
             // Create a texture. Texture size does not matter, since
             // LoadImage will replace with the incoming image size.
