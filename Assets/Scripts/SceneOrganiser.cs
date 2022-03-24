@@ -45,6 +45,8 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     internal Renderer quadRenderer;
     public GameObject sphere;
+    Vector3 xyz_axis;
+    float zaxis;
     /// <summary>
     /// Called on initialization
     /// </summary>
@@ -148,6 +150,7 @@ public class SceneOrganiser : MonoBehaviour
         // to allow the image on the quad to be as precisely imposed to the real world as possible
         quad.transform.localScale = new Vector3(3f, 1.65f, 1f);
         quad.transform.parent = null;
+
     }
     /// <summary>
     /// Set the Tags as Text of the last label created. 
@@ -176,22 +179,27 @@ public class SceneOrganiser : MonoBehaviour
 
                 // Set the tag text
                 lastLabelPlacedText.text = bestPrediction.tagName;
-                // Cast a ray from the user's head to the currently placed label, it should hit the object detected by the Service.
-                // At that point it will reposition the label where the ray HL sensor collides with the object,
-                // (using the HL spatial tracking)
+                //Does raycast straight forward positions label where the raycast hits.
                 Debug.Log("Repositioning Label");
-                Vector3 headPosition = Camera.main.transform.position;
-                RaycastHit objHitInfo;
-                Vector3 objDirection = lastLabelPlaced.position;
+                RaycastHit hitInfo;
 
-                if (Physics.Raycast(headPosition, objDirection, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
+                if (Physics.Raycast(
+                        Camera.main.transform.position,
+                        Camera.main.transform.forward,
+                        out hitInfo,
+                        20.0f,
+                        Physics.DefaultRaycastLayers))
                 {
-                    lastLabelPlaced.position = objHitInfo.point;
-
+                    // If the Raycast has succeeded and hit a hologram
+                    // hitInfo's point represents the position being gazed at
+                    // hitInfo's collider GameObject represents the hologram being gazed at
+                    lastLabelPlaced.position = hitInfo.point;
                 }
-                
-                Debug.Log(objHitInfo.distance);
-                Debug.Log(objHitInfo.point);
+                quad.GetComponent<Renderer>().enabled = true;
+
+                Debug.Log(hitInfo.distance);
+                Debug.Log(hitInfo.point);
+
             }
         }
         // Reset the color of the cursor
