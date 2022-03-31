@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SceneOrganiser : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Reduce this value to display the recognition more often
     /// </summary>
     internal float probabilityThreshold = 0.3f;
-    public Transform target;
+
     /// <summary>
     /// The quad object hosting the imposed image captured
     /// </summary>
@@ -45,8 +46,7 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     internal Renderer quadRenderer;
     public GameObject sphere;
-    Vector3 xyz_axis;
-    float zaxis;
+
     /// <summary>
     /// Called on initialization
     /// </summary>
@@ -72,6 +72,7 @@ public class SceneOrganiser : MonoBehaviour
         label = CreateLabel();
 
     }
+
     /// <summary>
     /// Spawns cursor for the Main Camera
     /// </summary>
@@ -89,7 +90,7 @@ public class SceneOrganiser : MonoBehaviour
         // Move it to the correct position
         newCursor.transform.localPosition = new Vector3(0, 0, 4);
 
-        // Set the cursor color to red
+        // Set the cursor color to white
         newCursor.GetComponent<Renderer>().material = new Material(Shader.Find("Diffuse"));
         newCursor.GetComponent<Renderer>().material.color = Color.white;
 
@@ -104,8 +105,7 @@ public class SceneOrganiser : MonoBehaviour
         // Create a sphere as new cursor
         GameObject newLabel = new GameObject();
 
-        // Resize the new cursor
-        newLabel.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
         // Creating the text of the label
         TextMesh t = newLabel.AddComponent<TextMesh>();
         t.anchor = TextAnchor.MiddleCenter;
@@ -133,7 +133,7 @@ public class SceneOrganiser : MonoBehaviour
         quadRenderer = quad.GetComponent<Renderer>();
 
         // Makes quad invincible
-        quad.GetComponent<Renderer>().enabled = false;
+        //quad.GetComponent<Renderer>().enabled = false;
         // Here you can set the transparency of the quad. Useful for debugging
         float transparency = 0f;
         quadRenderer.material.color = new Color(1, 1, 1, transparency);
@@ -182,10 +182,12 @@ public class SceneOrganiser : MonoBehaviour
                 //Does raycast straight forward positions label where the raycast hits.
                 Debug.Log("Repositioning Label");
                 RaycastHit hitInfo;
+                Vector3 headPosition = Camera.main.transform.position;
+                Vector3 objDirection = Camera.main.transform.forward;
 
                 if (Physics.Raycast(
-                        Camera.main.transform.position,
-                        Camera.main.transform.forward,
+                        headPosition,
+                        objDirection,
                         out hitInfo,
                         20.0f,
                         Physics.DefaultRaycastLayers))
@@ -193,12 +195,10 @@ public class SceneOrganiser : MonoBehaviour
                     // If the Raycast has succeeded and hit a hologram
                     // hitInfo's point represents the position being gazed at
                     // hitInfo's collider GameObject represents the hologram being gazed at
-                    lastLabelPlaced.position = hitInfo.point;
-                }
-                quad.GetComponent<Renderer>().enabled = true;
 
-                Debug.Log(hitInfo.distance);
-                Debug.Log(hitInfo.point);
+                    lastLabelPlaced.position = hitInfo.point;
+
+                }
 
             }
         }
@@ -231,4 +231,9 @@ public class SceneOrganiser : MonoBehaviour
         return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
 
     }
+    private void reload()
+    {
+        SceneManager.LoadScene("MRKTscene");
+    }
+
 }

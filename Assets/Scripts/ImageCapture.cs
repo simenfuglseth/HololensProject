@@ -4,14 +4,11 @@ using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Windows.WebCam;
-using Microsoft.MixedReality.Toolkit.Input;
-using Microsoft.MixedReality.Toolkit;
+
 
 public class ImageCapture : MonoBehaviour
 
 {
-    [SerializeField]
-    private MixedRealityInputAction selectAction;
     /// <summary>
     /// Allows this class to behave like a singleton
     /// </summary>
@@ -34,7 +31,6 @@ public class ImageCapture : MonoBehaviour
     {
         Instance = this;
 
-        //gameObject.AddComponent<CustomVisionAnalyser>();
     }
     // Use this for initialization
     void Start()
@@ -53,12 +49,6 @@ public class ImageCapture : MonoBehaviour
                 Debug.LogFormat("Cannot delete file: ", file.Name);
             }
         }
-        WebCamDevice[] devices = WebCamTexture.devices;
-        for (int i = 0; i < devices.Length; i++)
-            Debug.Log(devices[i].name);
-        // Begin the capture loop
-        //Invoke("ExecuteImageCaptureAndAnalysis", 0);
-
     }
 
     //Button to take photo for testing
@@ -71,10 +61,17 @@ public class ImageCapture : MonoBehaviour
             // Set the cursor color to red
             //SceneOrganiser.Instance.cursor.GetComponent<Renderer>().material.color = Color.red;
             Invoke("ExecuteImageCaptureAndAnalysis", 0);
+        if (GUI.Button(new Rect(10, 10, 50, 50), "click"))
+            //captureIsActive = true;
+
+            // Set the cursor color to red
+            //SceneOrganiser.Instance.cursor.GetComponent<Renderer>().material.color = Color.red;
+            SceneOrganiser.Instance.Invoke("reload", 0);
     }
-            /// <summary>
-            /// Begin process of image capturing and send to Azure Custom Vision Service.
-            /// </summary>
+
+    /// <summary>
+    /// Begin process of image capturing and send to Azure Custom Vision Service.
+    /// </summary>
     private void ExecuteImageCaptureAndAnalysis()
     {
 
@@ -108,27 +105,6 @@ public class ImageCapture : MonoBehaviour
             });
         });
     }
-    //Show the image catured
-    /*
-    void OnCapturedPhotoToMemory(PhotoCapture.PhotoCaptureResult result, PhotoCaptureFrame photoCaptureFrame)
-    {
-        // Copy the raw image data into our target texture
-        photoCaptureFrame.UploadImageDataToTexture(targetTexture);
-
-        // Create a gameobject that we can apply our texture shown in Quad scene
-        GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        Renderer quadRenderer = quad.GetComponent<Renderer>() as Renderer;
-        quadRenderer.material = new Material(Shader.Find("Unlit/Texture"));
-
-        quad.transform.parent = this.transform;
-        quad.transform.localPosition = new Vector3(0.0f, 0.0f, 3.0f);
-
-        quadRenderer.material.SetTexture("_MainTex", targetTexture);
-
-
-        Debug.Log(Application.persistentDataPath);
-
-    } */
     void OnCapturedPhotoToDisk(PhotoCapture.PhotoCaptureResult result)
     {
         try
@@ -160,16 +136,8 @@ public class ImageCapture : MonoBehaviour
     internal void ResetImageCapture()
     {
         captureIsActive = false;
-
-        // Set the cursor color to green
-        SceneOrganiser.Instance.cursor.GetComponent<Renderer>().material.color = Color.green;
-
         // Stop the capture loop if active
         CancelInvoke();
     }
-
 }
-
-
-
 
