@@ -10,10 +10,22 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler
     }
     public void OnSpeechKeywordRecognized(SpeechEventData eventData)
     {
-        Debug.Log("Image Capture");
-        ImageCapture.Instance.Invoke("ExecuteImageCaptureAndAnalysis", 0);
+        Debug.Log("OnSpeechKeywordRecognized");
+
+        switch (eventData.Command.Keyword)
+
+        {
+            case "Image Capture":
+                ImageCapture.Instance.Invoke("ExecuteImageCaptureAndAnalysis", 0);
+                Debug.Log("Image Capture");
+
+                break;
+
+            case "Remove Objects":
+                SceneOrganiser.Instance.Invoke("reload", 0);
+                Debug.Log("Remove Objects");
+
+                break;
+        }
     }
-
-
-
 }

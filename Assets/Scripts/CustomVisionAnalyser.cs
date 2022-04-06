@@ -21,7 +21,7 @@ public class CustomVisionAnalyser : MonoBehaviour
     /// <summary>
     /// Insert your prediction endpoint here
     /// </summary>
-    private string predictionEndpoint = "https://customvisjobjdectection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/155c7201-1e60-496a-80fe-9e34459c01df/detect/iterations/Iteration1/image";
+    private string predictionEndpoint = "https://customvisjobjdectection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/155c7201-1e60-496a-80fe-9e34459c01df/detect/iterations/Iteration2/image";
 
     /// <summary>
     /// Bite array of the image to submit for analysis
