@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class GazeCursor : MonoBehaviour
 {
+
+
     /// <summary>
     /// The cursor (this object) mesh renderer
     /// </summary>
@@ -21,7 +24,9 @@ public class GazeCursor : MonoBehaviour
         gameObject.GetComponent<Renderer>().material.color = Color.white;
 
         // If you wish to change the size of the cursor you can do so here
-        gameObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+        meshRenderer.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+
+
     }
     /// <summary>
     /// Update is called once per frame
@@ -41,5 +46,6 @@ public class GazeCursor : MonoBehaviour
         {
 
         }
+
     }
 }

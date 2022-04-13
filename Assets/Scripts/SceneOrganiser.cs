@@ -5,6 +5,9 @@ using UnityEngine.SceneManagement;
 
 public class SceneOrganiser : MonoBehaviour
 {
+    /// <summary>
+    /// Sends raycast to update
+    /// </summary>
     internal bool sendRaycast;
     /// <summary>
     /// Allows this class to behave like a singleton
@@ -35,7 +38,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Current threshold accepted for displaying the label
     /// Reduce this value to display the recognition more often
     /// </summary>
-    internal float probabilityThreshold = 0.3f;
+    internal float probabilityThreshold = 0.5f;
 
     /// <summary>
     /// The quad object hosting the imposed image captured
@@ -46,7 +49,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Renderer of the quad object
     /// </summary>
     internal Renderer quadRenderer;
-    public GameObject sphere;
+
 
     /// <summary>
     /// Called on initialization
@@ -76,9 +79,8 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     private GameObject CreateLabel()
     {
-        // Create a sphere as new cursor
+   
         GameObject newLabel = new GameObject();
-
 
         // Creating the text of the label
         TextMesh t = newLabel.AddComponent<TextMesh>();
@@ -97,7 +99,7 @@ public class SceneOrganiser : MonoBehaviour
     {
         //Destroy previous quad
         //Destroy(quad);
-        
+
         lastLabelPlaced = Instantiate(label.transform, cursor.transform.position, transform.rotation);
 
         lastLabelPlaced.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
@@ -108,10 +110,6 @@ public class SceneOrganiser : MonoBehaviour
 
         // Makes quad invincible
         quad.GetComponent<Renderer>().enabled = false;
-        // Here you can set the transparency of the quad. Useful for debugging
-        float transparency = 0f;
-        quadRenderer.material.color = new Color(1, 1, 1, transparency);
-
 
         // Set the position and scale of the quad depending on user position
         quad.transform.parent = transform;
@@ -139,7 +137,7 @@ public class SceneOrganiser : MonoBehaviour
             sortedPredictions = analysisObject.predictions.OrderBy(p => p.probability).ToList();
             Prediction bestPrediction = new Prediction();
             bestPrediction = sortedPredictions[sortedPredictions.Count - 1];
-
+            Debug.Log(bestPrediction.probability);
             if (bestPrediction.probability > probabilityThreshold)
             {
                 quadRenderer = quad.GetComponent<Renderer>();
@@ -149,10 +147,7 @@ public class SceneOrganiser : MonoBehaviour
                 // At this point it will not consider depth
   
                 lastLabelPlaced.transform.parent = quad.transform;
-                lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);
-
-                
-        
+                lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);                   
                 // Set the tag text
                 lastLabelPlacedText.text = bestPrediction.tagName;
 
@@ -162,10 +157,12 @@ public class SceneOrganiser : MonoBehaviour
         }
         // Reset the color of the cursor
         cursor.GetComponent<Renderer>().material.color = Color.green;
+        //Enables quad for debugging
         //quad.GetComponent<Renderer>().enabled = true;
         // Stop the analysis process
         ImageCapture.Instance.ResetImageCapture();
     }
+
     /// <summary>
     /// This method hosts a series of calculations to determine the position 
     /// of the Bounding Box on the quad created in the real world
@@ -181,47 +178,43 @@ public class SceneOrganiser : MonoBehaviour
         double centerFromTop = boundingBox.top + (boundingBox.height / 2);
         Debug.Log($"BB CenterFromLeft {centerFromLeft}, CenterFromTop {centerFromTop}");
 
-        double quadWidth = b.size.normalized.x;
-        double quadHeight = b.size.normalized.y;
-        Debug.Log($"Quad Width {b.size.normalized.x}, Quad Height {b.size.normalized.y}");
         if ((boundingBox.top > 0.5) & (boundingBox.left > 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Up left X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if ((boundingBox.top > 0.5) & (boundingBox.left < 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Up right X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if((boundingBox.top < 0.5) & (boundingBox.left < 0.5))
         {
             double normalisedPos_X = (centerFromLeft - 0.5);
             double normalisedPos_Y = (0.5 - centerFromTop);
             Debug.Log($"Down right X {normalisedPos_X}, Y {normalisedPos_Y}");
             return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
         }
-        else if((boundingBox.top < 0.5) & (boundingBox.left > 0.5))
+        else if ((boundingBox.top > 0.5) & (boundingBox.left < 0.5))
         {
-            double normalisedPos_X = (centerFromLeft - 0.5) + (quadWidth / 2);
-            double normalisedPos_Y = (0.5 - centerFromTop) + (quadHeight / 2);
+            double normalisedPos_X = (centerFromLeft - 0.5);
+            double normalisedPos_Y = (0.5 - centerFromTop);
             Debug.Log($"Down left X {normalisedPos_X}, Y {normalisedPos_Y}");
+            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
+        }
+        else if ((boundingBox.top < 0.5) & (boundingBox.left < 0.5))
+        {
+            double normalisedPos_X = (centerFromLeft - 0.5);
+            double normalisedPos_Y = (0.5 - centerFromTop);
+            Debug.Log($"Top left X {normalisedPos_X}, Y {normalisedPos_Y}");
+            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
+        }
+        else if ((boundingBox.top < 0.5) & (boundingBox.left > 0.5))
+        {
+            double normalisedPos_X = (centerFromLeft - 0.5);
+            double normalisedPos_Y = (0.5 - centerFromTop);
+            Debug.Log($"Top right X {normalisedPos_X}, Y {normalisedPos_Y}");
             return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
         }
         else
         {
             return new Vector3(0, 0, 0);
         }
-        //double normalisedPos_X = (quadWidth * centerFromLeft) - (quadWidth / 2);
-        //double normalisedPos_Y = (quadHeight * centerFromTop) - (quadHeight / 2);
-        //Debug.Log($"X {normalisedPos_X}, Y {normalisedPos_Y}");
-        //return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
     }
-    private void reload()
+    /// <summary>
+    /// Reloads the scene
+    /// </summary>
+        private void reload()
     {
         SceneManager.LoadScene("MRKTscene");
     }
@@ -232,14 +225,18 @@ public class SceneOrganiser : MonoBehaviour
         {
             Debug.Log("Repositioning Label");
             Vector3 headPosition = Camera.main.transform.position;
-
             Vector3 dir = lastLabelPlaced.transform.position - Camera.main.transform.position;
+            //Debug.Log(dir);
+            LineRenderer laserline;
+            laserline = GetComponent<LineRenderer>();
+            laserline.SetPosition(0, headPosition);
             if (Physics.Raycast(headPosition, dir, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
             {
                 lastLabelPlaced.position = objHitInfo.point;
-            }
-            Debug.DrawRay(headPosition, dir, Color.blue, 1000000);
-
+                //Debug.Log(objHitInfo.point);
+                laserline.SetPosition(1, objHitInfo.point);
+                Debug.DrawRay(headPosition, dir, Color.blue, 1000000);
+            }        
             sendRaycast = false;
         }
     }
