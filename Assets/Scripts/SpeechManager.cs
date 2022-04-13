@@ -15,9 +15,9 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler
         switch (eventData.Command.Keyword)
 
         {
-            case "Image Capture":
+            case "Capture Image":
                 ImageCapture.Instance.Invoke("ExecuteImageCaptureAndAnalysis", 0);
-                Debug.Log("Image Capture");
+                Debug.Log("Capture Image");
 
                 break;
 

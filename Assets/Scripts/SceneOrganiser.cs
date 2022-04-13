@@ -6,10 +6,14 @@ using UnityEngine.SceneManagement;
 public class SceneOrganiser : MonoBehaviour
 {
     /// <summary>
+    /// Sends raycast to update
+    /// </summary>
+    internal bool sendRaycast;
+    /// <summary>
     /// Allows this class to behave like a singleton
     /// </summary>
     public static SceneOrganiser Instance;
-    Camera cam;
+
     /// <summary>
     /// The cursor object attached to the Main Camera
     /// </summary>
@@ -34,7 +38,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Current threshold accepted for displaying the label
     /// Reduce this value to display the recognition more often
     /// </summary>
-    internal float probabilityThreshold = 0.3f;
+    internal float probabilityThreshold = 0.5f;
 
     /// <summary>
     /// The quad object hosting the imposed image captured
@@ -45,7 +49,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Renderer of the quad object
     /// </summary>
     internal Renderer quadRenderer;
-    public GameObject sphere;
+
 
     /// <summary>
     /// Called on initialization
@@ -65,46 +69,18 @@ public class SceneOrganiser : MonoBehaviour
 
         // Add the CustomVisionObjects class to this Gameobject
         gameObject.AddComponent<CustomVisionObjects>();
-        // Create the camera Cursor
-        cursor = CreateCameraCursor();
 
         // Load the label prefab as reference
         label = CreateLabel();
 
     }
-
-    /// <summary>
-    /// Spawns cursor for the Main Camera
-    /// </summary>
-    private GameObject CreateCameraCursor()
-    {
-        // Create a sphere as new cursor
-        GameObject newCursor = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-
-        // Attach it to the camera
-        newCursor.transform.parent = gameObject.transform;
-
-        // Resize the new cursor
-        newCursor.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
-
-        // Move it to the correct position
-        newCursor.transform.localPosition = new Vector3(0, 0, 4);
-
-        // Set the cursor color to white
-        newCursor.GetComponent<Renderer>().material = new Material(Shader.Find("Diffuse"));
-        newCursor.GetComponent<Renderer>().material.color = Color.white;
-
-        return newCursor;
-    }
-
     /// <summary>
     /// Create the analysis label object
     /// </summary>
     private GameObject CreateLabel()
     {
-        // Create a sphere as new cursor
+   
         GameObject newLabel = new GameObject();
-
 
         // Creating the text of the label
         TextMesh t = newLabel.AddComponent<TextMesh>();
@@ -123,7 +99,7 @@ public class SceneOrganiser : MonoBehaviour
     {
         //Destroy previous quad
         //Destroy(quad);
-        
+
         lastLabelPlaced = Instantiate(label.transform, cursor.transform.position, transform.rotation);
 
         lastLabelPlaced.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
@@ -134,10 +110,6 @@ public class SceneOrganiser : MonoBehaviour
 
         // Makes quad invincible
         quad.GetComponent<Renderer>().enabled = false;
-        // Here you can set the transparency of the quad. Useful for debugging
-        float transparency = 0f;
-        quadRenderer.material.color = new Color(1, 1, 1, transparency);
-
 
         // Set the position and scale of the quad depending on user position
         quad.transform.parent = transform;
@@ -165,52 +137,38 @@ public class SceneOrganiser : MonoBehaviour
             sortedPredictions = analysisObject.predictions.OrderBy(p => p.probability).ToList();
             Prediction bestPrediction = new Prediction();
             bestPrediction = sortedPredictions[sortedPredictions.Count - 1];
-
+            Debug.Log(bestPrediction.probability);
             if (bestPrediction.probability > probabilityThreshold)
             {
-                quadRenderer = quad.GetComponent<Renderer>() as Renderer;
+                quadRenderer = quad.GetComponent<Renderer>();
                 Bounds quadBounds = quadRenderer.bounds;
 
                 // Position the label as close as possible to the Bounding Box of the prediction 
                 // At this point it will not consider depth
+  
                 lastLabelPlaced.transform.parent = quad.transform;
-                lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);
-
+                lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);                   
                 // Set the tag text
                 lastLabelPlacedText.text = bestPrediction.tagName;
 
-                // Cast a ray from the user's head to the currently placed label, it should hit the object detected by the Service.
-                // At that point it will reposition the label where the ray HL sensor collides with the object,
-                // (using the HL spatial tracking)
-                Debug.Log("Repositioning Label");
-                Vector3 headPosition = Camera.main.transform.position;
-                RaycastHit objHitInfo;
-                Vector3 objDirection= lastLabelPlaced.position;
-                cam = GetComponent<Camera>();
-
-                Ray ray = cam.ViewportPointToRay(objDirection);
-
-                Debug.Log(objDirection);
-                Debug.Log(ray.direction);
-                Debug.Log(Camera.main.transform.forward);
-                if (Physics.Raycast(Camera.main.transform.position, objDirection, out objHitInfo, 20.0f, Physics.DefaultRaycastLayers))
-                {
-                    lastLabelPlaced.transform.position = objHitInfo.point;
-                    Debug.Log("Position " + lastLabelPlaced.transform.position);
-                }
+                sendRaycast = true;
 
             }
         }
         // Reset the color of the cursor
         cursor.GetComponent<Renderer>().material.color = Color.green;
-        quad.GetComponent<Renderer>().enabled = true;
+        //Enables quad for debugging
+        //quad.GetComponent<Renderer>().enabled = true;
         // Stop the analysis process
         ImageCapture.Instance.ResetImageCapture();
     }
+
     /// <summary>
     /// This method hosts a series of calculations to determine the position 
     /// of the Bounding Box on the quad created in the real world
     /// by using the Bounding Box received back alongside the Best Prediction
+    /// Calculates the center of boundingbox from the respone which is a 0, 1 cordinate system
+    /// to -0.5, 0.5 where the center is 0, 0 cordinate system
     /// </summary>
     public Vector3 CalculateBoundingBoxPosition(Bounds b, BoundingBox boundingBox)
     {
@@ -220,49 +178,66 @@ public class SceneOrganiser : MonoBehaviour
         double centerFromTop = boundingBox.top + (boundingBox.height / 2);
         Debug.Log($"BB CenterFromLeft {centerFromLeft}, CenterFromTop {centerFromTop}");
 
-        double quadWidth = b.size.normalized.x;
-        double quadHeight = b.size.normalized.y;
-        Debug.Log($"Quad Width {b.size.normalized.x}, Quad Height {b.size.normalized.y}");
         if ((boundingBox.top > 0.5) & (boundingBox.left > 0.5))
         {
             double normalisedPos_X = (centerFromLeft - 0.5);
             double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"1 X {normalisedPos_X}, Y {normalisedPos_Y}");
+            Debug.Log($"Down right X {normalisedPos_X}, Y {normalisedPos_Y}");
             return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
         }
         else if ((boundingBox.top > 0.5) & (boundingBox.left < 0.5))
         {
             double normalisedPos_X = (centerFromLeft - 0.5);
             double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"2 X {normalisedPos_X}, Y {normalisedPos_Y}");
+            Debug.Log($"Down left X {normalisedPos_X}, Y {normalisedPos_Y}");
             return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
         }
-        else if((boundingBox.top < 0.5) & (boundingBox.left < 0.5))
+        else if ((boundingBox.top < 0.5) & (boundingBox.left < 0.5))
         {
             double normalisedPos_X = (centerFromLeft - 0.5);
             double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"3 X {normalisedPos_X}, Y {normalisedPos_Y}");
+            Debug.Log($"Top left X {normalisedPos_X}, Y {normalisedPos_Y}");
             return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
         }
-        else if((boundingBox.top < 0.5) & (boundingBox.left > 0.5))
+        else if ((boundingBox.top < 0.5) & (boundingBox.left > 0.5))
         {
-            double normalisedPos_X = (centerFromLeft - 0.5) + (quadWidth / 2);
-            double normalisedPos_Y = (0.5 - centerFromTop) + (quadHeight / 2);
-            Debug.Log($"4 X {normalisedPos_X}, Y {normalisedPos_Y}");
+            double normalisedPos_X = (centerFromLeft - 0.5);
+            double normalisedPos_Y = (0.5 - centerFromTop);
+            Debug.Log($"Top right X {normalisedPos_X}, Y {normalisedPos_Y}");
             return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
         }
         else
         {
             return new Vector3(0, 0, 0);
         }
-        //double normalisedPos_X = (quadWidth * centerFromLeft) - (quadWidth / 2);
-        //double normalisedPos_Y = (quadHeight * centerFromTop) - (quadHeight / 2);
-        //Debug.Log($"X {normalisedPos_X}, Y {normalisedPos_Y}");
-        //return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
     }
-    private void reload()
+    /// <summary>
+    /// Reloads the scene
+    /// </summary>
+        private void reload()
     {
         SceneManager.LoadScene("MRKTscene");
     }
-
+    void FixedUpdate()
+    {
+        RaycastHit objHitInfo;
+        if (sendRaycast == true)
+        {
+            Debug.Log("Repositioning Label");
+            Vector3 headPosition = Camera.main.transform.position;
+            Vector3 dir = lastLabelPlaced.transform.position - Camera.main.transform.position;
+            //Debug.Log(dir);
+            LineRenderer laserline;
+            laserline = GetComponent<LineRenderer>();
+            laserline.SetPosition(0, headPosition);
+            if (Physics.Raycast(headPosition, dir, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
+            {
+                lastLabelPlaced.position = objHitInfo.point;
+                //Debug.Log(objHitInfo.point);
+                laserline.SetPosition(1, objHitInfo.point);
+                Debug.DrawRay(headPosition, dir, Color.blue, 1000000);
+            }        
+            sendRaycast = false;
+        }
+    }
 }
