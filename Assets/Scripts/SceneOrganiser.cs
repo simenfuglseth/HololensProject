@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -5,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class SceneOrganiser : MonoBehaviour
 {
+
     /// <summary>
     /// Sends raycast to update
     /// </summary>
@@ -50,7 +52,10 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     internal Renderer quadRenderer;
 
-
+    /// <summary>
+    /// Visulize direction of object found
+    /// </summary>
+    private LineRenderer laserline;
     /// <summary>
     /// Called on initialization
     /// </summary>
@@ -73,7 +78,9 @@ public class SceneOrganiser : MonoBehaviour
         // Load the label prefab as reference
         label = CreateLabel();
 
+        cursor = gameObject;
     }
+
     /// <summary>
     /// Create the analysis label object
     /// </summary>
@@ -137,6 +144,7 @@ public class SceneOrganiser : MonoBehaviour
             sortedPredictions = analysisObject.predictions.OrderBy(p => p.probability).ToList();
             Prediction bestPrediction = new Prediction();
             bestPrediction = sortedPredictions[sortedPredictions.Count - 1];
+
             Debug.Log(bestPrediction.probability);
             if (bestPrediction.probability > probabilityThreshold)
             {
@@ -151,7 +159,9 @@ public class SceneOrganiser : MonoBehaviour
                 // Set the tag text
                 lastLabelPlacedText.text = bestPrediction.tagName;
 
+                //Set sendRaycast to true so that update below does raycast
                 sendRaycast = true;
+
 
             }
         }
@@ -218,26 +228,58 @@ public class SceneOrganiser : MonoBehaviour
     {
         SceneManager.LoadScene("MRKTscene");
     }
-    void FixedUpdate()
+    /// <summary>
+    /// Slowly fade out laserline used for visualization
+    /// </summary>
+    ///
+    IEnumerator FadeLineRenderer()
     {
+        Gradient lineRendererGradient = new Gradient();
+        float fadeSpeed = 10f;
+        float timeElapsed = 0f;
+        float alpha = 1f;
+
+        while (timeElapsed < fadeSpeed)
+        {
+            alpha = Mathf.Lerp(1f, 0f, timeElapsed / fadeSpeed);
+
+            lineRendererGradient.SetKeys
+            (
+                laserline.colorGradient.colorKeys,
+                new GradientAlphaKey[] { new GradientAlphaKey(alpha, 1f) }
+            );
+            laserline.colorGradient = lineRendererGradient;
+
+            timeElapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        //Destroy(laserline);
+    }
+
+        void FixedUpdate()
+    {
+
         RaycastHit objHitInfo;
         if (sendRaycast == true)
         {
             Debug.Log("Repositioning Label");
             Vector3 headPosition = Camera.main.transform.position;
             Vector3 dir = lastLabelPlaced.transform.position - Camera.main.transform.position;
-            //Debug.Log(dir);
-            LineRenderer laserline;
+            
+            //Visualize ray to see where raycast went
+
             laserline = GetComponent<LineRenderer>();
             laserline.SetPosition(0, headPosition);
             if (Physics.Raycast(headPosition, dir, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
             {
                 lastLabelPlaced.position = objHitInfo.point;
-                //Debug.Log(objHitInfo.point);
                 laserline.SetPosition(1, objHitInfo.point);
                 Debug.DrawRay(headPosition, dir, Color.blue, 1000000);
+                
             }        
             sendRaycast = false;
+            StartCoroutine(FadeLineRenderer());
         }
     }
 }

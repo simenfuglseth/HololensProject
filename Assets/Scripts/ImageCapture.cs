@@ -66,7 +66,7 @@ public class ImageCapture : MonoBehaviour
 
             // Set the cursor color to red
             //SceneOrganiser.Instance.cursor.GetComponent<Renderer>().material.color = Color.red;
-            SceneOrganiser.Instance.Invoke("reload", 0);
+            Introduction.Instance.Invoke("hideIntro", 0);
     }
 
     /// <summary>
@@ -127,6 +127,9 @@ public class ImageCapture : MonoBehaviour
         photoCaptureObject.Dispose();
         photoCaptureObject = null;
         StartCoroutine(CustomVisionAnalyser.Instance.AnalyseLastImageCaptured(filePath));
+
+        //Hides starter text
+        Introduction.Instance.Invoke("hideIntro", 0);
 
     }
 
