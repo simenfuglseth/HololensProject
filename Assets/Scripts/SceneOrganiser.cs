@@ -40,7 +40,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Current threshold accepted for displaying the label
     /// Reduce this value to display the recognition more often
     /// </summary>
-    internal float probabilityThreshold = 0.5f;
+    internal float probabilityThreshold = 0f;
 
     /// <summary>
     /// The quad object hosting the imposed image captured
@@ -168,7 +168,7 @@ public class SceneOrganiser : MonoBehaviour
         // Reset the color of the cursor
         cursor.GetComponent<Renderer>().material.color = Color.green;
         //Enables quad for debugging
-        //quad.GetComponent<Renderer>().enabled = true;
+        quad.GetComponent<Renderer>().enabled = true;
         // Stop the analysis process
         ImageCapture.Instance.ResetImageCapture();
     }
@@ -188,38 +188,12 @@ public class SceneOrganiser : MonoBehaviour
         double centerFromTop = boundingBox.top + (boundingBox.height / 2);
         Debug.Log($"BB CenterFromLeft {centerFromLeft}, CenterFromTop {centerFromTop}");
 
-        if ((boundingBox.top > 0.5) & (boundingBox.left > 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Down right X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if ((boundingBox.top > 0.5) & (boundingBox.left < 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Down left X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if ((boundingBox.top < 0.5) & (boundingBox.left < 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Top left X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if ((boundingBox.top < 0.5) & (boundingBox.left > 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Top right X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else
-        {
-            return new Vector3(0, 0, 0);
-        }
+
+        double normalisedPos_X = (centerFromLeft - 0.5);
+        double normalisedPos_Y = (0.5 - centerFromTop);
+
+        return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
+
     }
     /// <summary>
     /// Reloads the scene
