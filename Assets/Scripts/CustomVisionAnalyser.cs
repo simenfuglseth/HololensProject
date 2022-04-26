@@ -1,8 +1,6 @@
 using Newtonsoft.Json;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -16,12 +14,12 @@ public class CustomVisionAnalyser : MonoBehaviour
     /// <summary>
     /// Insert your prediction key here
     /// </summary>
-    private string predictionKey = "9b0140ddc3d447398a956b98590698d5";
+    private string predictionKey = "9f10e71a458b49a9ba29869fe4eeb781";
 
     /// <summary>
     /// Insert your prediction endpoint here
     /// </summary>
-    private string predictionEndpoint = "https://customvisjobjdectection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/a1effd6a-c083-4317-afdc-d0b07f1acbec/detect/iterations/Iteration3/image";
+    private string predictionEndpoint = "https://himoldeobjdet-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/57cdfac0-896e-4478-a979-4a85c2f2ded8/detect/iterations/Iteration2/image";
                                          
     /// <summary>
     /// Bite array of the image to submit for analysis
@@ -80,6 +78,7 @@ public class CustomVisionAnalyser : MonoBehaviour
             AnalysisRootObject analysisRootObject = new AnalysisRootObject();
             analysisRootObject = JsonConvert.DeserializeObject<AnalysisRootObject>(jsonResponse);
 
+            //Sends json respone with tag, prediction and bbox
             SceneOrganiser.Instance.FinaliseLabel(analysisRootObject);
         }
     }

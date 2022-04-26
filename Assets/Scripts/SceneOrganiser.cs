@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -5,6 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class SceneOrganiser : MonoBehaviour
 {
+
     /// <summary>
     /// Sends raycast to update
     /// </summary>
@@ -38,7 +41,7 @@ public class SceneOrganiser : MonoBehaviour
     /// Current threshold accepted for displaying the label
     /// Reduce this value to display the recognition more often
     /// </summary>
-    internal float probabilityThreshold = 0.5f;
+    internal float probabilityThreshold = 0.2f;
 
     /// <summary>
     /// The quad object hosting the imposed image captured
@@ -50,7 +53,18 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     internal Renderer quadRenderer;
 
-
+    /// <summary>
+    /// Visulize direction of object found
+    /// </summary>
+    private LineRenderer laserline;
+    /// <summary>
+    /// 
+    /// </summary>
+    private TextMesh labelText;
+    /// <summary>
+    /// 
+    /// </summary>
+    private TextMesh probabilityText;
     /// <summary>
     /// Called on initialization
     /// </summary>
@@ -70,26 +84,26 @@ public class SceneOrganiser : MonoBehaviour
         // Add the CustomVisionObjects class to this Gameobject
         gameObject.AddComponent<CustomVisionObjects>();
 
-        // Load the label prefab as reference
-        label = CreateLabel();
+        cursor = gameObject;
+
 
     }
+
     /// <summary>
     /// Create the analysis label object
     /// </summary>
     private GameObject CreateLabel()
     {
    
-        GameObject newLabel = new GameObject();
+        label = new GameObject();
 
         // Creating the text of the label
-        TextMesh t = newLabel.AddComponent<TextMesh>();
-        t.anchor = TextAnchor.MiddleCenter;
-        t.alignment = TextAlignment.Center;
-        t.fontSize = 100;
-        t.text = "";
+        labelText = label.AddComponent<TextMesh>();
+        labelText.anchor = TextAnchor.MiddleCenter;
+        labelText.alignment = TextAlignment.Center;
+        labelText.fontSize = 100;
 
-        return newLabel;
+        return label;
     }
 
     /// <summary>
@@ -100,7 +114,7 @@ public class SceneOrganiser : MonoBehaviour
         //Destroy previous quad
         //Destroy(quad);
 
-        lastLabelPlaced = Instantiate(label.transform, cursor.transform.position, transform.rotation);
+        lastLabelPlaced = Instantiate(CreateLabel().transform, cursor.transform.position, transform.rotation);
 
         lastLabelPlaced.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
 
@@ -137,7 +151,7 @@ public class SceneOrganiser : MonoBehaviour
             sortedPredictions = analysisObject.predictions.OrderBy(p => p.probability).ToList();
             Prediction bestPrediction = new Prediction();
             bestPrediction = sortedPredictions[sortedPredictions.Count - 1];
-            Debug.Log(bestPrediction.probability);
+
             if (bestPrediction.probability > probabilityThreshold)
             {
                 quadRenderer = quad.GetComponent<Renderer>();
@@ -145,15 +159,37 @@ public class SceneOrganiser : MonoBehaviour
 
                 // Position the label as close as possible to the Bounding Box of the prediction 
                 // At this point it will not consider depth
-  
+
                 lastLabelPlaced.transform.parent = quad.transform;
-                lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);                   
-                // Set the tag text
-                lastLabelPlacedText.text = bestPrediction.tagName;
+                lastLabelPlaced.transform.localPosition = CalculateBoundingBoxPosition(quadBounds, bestPrediction.boundingBox);
 
-                sendRaycast = true;
+                lastLabelPlacedText.text = $"{bestPrediction.tagName}";
 
+                probabilityText = Instantiate(lastLabelPlacedText);
+                probabilityText.transform.position = lastLabelPlaced.position;
+
+                probabilityText.fontSize = 60;
+                probabilityText.text = ("\n\n\n\n Probability: " + string.Format("{0:0.0000}", bestPrediction.probability));
+
+                RaycastHit objHitInfo;
+                Debug.Log("Repositioning Label");
+                Vector3 headPosition = Camera.main.transform.position;
+                //Direction of the object detected
+                Vector3 dir = lastLabelPlaced.transform.position - Camera.main.transform.position;
+
+                //Visualize ray to see where raycast went
+                laserline = GetComponent<LineRenderer>();
+                laserline.SetPosition(0, headPosition);
+
+                //When Raycast hits the mesh added from spatial awareness assumes thats where the object is
+                if (Physics.Raycast(headPosition, dir, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
+                {
+                    lastLabelPlaced.position = objHitInfo.point;
+                    laserline.SetPosition(1, objHitInfo.point);
+                }
+                StartCoroutine(FadeLineRenderer());              
             }
+            
         }
         // Reset the color of the cursor
         cursor.GetComponent<Renderer>().material.color = Color.green;
@@ -178,66 +214,51 @@ public class SceneOrganiser : MonoBehaviour
         double centerFromTop = boundingBox.top + (boundingBox.height / 2);
         Debug.Log($"BB CenterFromLeft {centerFromLeft}, CenterFromTop {centerFromTop}");
 
-        if ((boundingBox.top > 0.5) & (boundingBox.left > 0.5))
+        double AxisDifference = 0.5;
+
+        double normalisedPos_X = (centerFromLeft - AxisDifference);
+        double normalisedPos_Y = (AxisDifference - centerFromTop);
+
+        return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
+
+    }
+
+    /// <summary>
+    /// Slowly fade out laserline used for visualization
+    /// </summary>
+    ///
+    IEnumerator FadeLineRenderer()
+    {
+        Gradient lineRendererGradient = new Gradient();
+        float fadeSpeed = 10f;
+        float timeElapsed = 0f;
+        while (timeElapsed < fadeSpeed)
         {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Down right X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
+            float alpha = Mathf.Lerp(1f, 0f, timeElapsed / fadeSpeed);
+            lineRendererGradient.SetKeys
+            (
+                laserline.colorGradient.colorKeys,
+                new GradientAlphaKey[] { new GradientAlphaKey(alpha, 1f) }
+            );
+            laserline.colorGradient = lineRendererGradient;
+
+            timeElapsed += Time.deltaTime;
+            yield return null;
         }
-        else if ((boundingBox.top > 0.5) & (boundingBox.left < 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Down left X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if ((boundingBox.top < 0.5) & (boundingBox.left < 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Top left X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else if ((boundingBox.top < 0.5) & (boundingBox.left > 0.5))
-        {
-            double normalisedPos_X = (centerFromLeft - 0.5);
-            double normalisedPos_Y = (0.5 - centerFromTop);
-            Debug.Log($"Top right X {normalisedPos_X}, Y {normalisedPos_Y}");
-            return new Vector3((float)normalisedPos_X, (float)normalisedPos_Y, 0);
-        }
-        else
-        {
-            return new Vector3(0, 0, 0);
-        }
+    }
+    /// <summary>
+    /// Finds the real world position of the object
+    /// </summary>
+        void FixedUpdate()
+    {
+
     }
     /// <summary>
     /// Reloads the scene
     /// </summary>
-        private void reload()
+    private void reload()
     {
         SceneManager.LoadScene("MRKTscene");
     }
-    void FixedUpdate()
-    {
-        RaycastHit objHitInfo;
-        if (sendRaycast == true)
-        {
-            Debug.Log("Repositioning Label");
-            Vector3 headPosition = Camera.main.transform.position;
-            Vector3 dir = lastLabelPlaced.transform.position - Camera.main.transform.position;
-            //Debug.Log(dir);
-            LineRenderer laserline;
-            laserline = GetComponent<LineRenderer>();
-            laserline.SetPosition(0, headPosition);
-            if (Physics.Raycast(headPosition, dir, out objHitInfo, 30.0f, Physics.DefaultRaycastLayers))
-            {
-                lastLabelPlaced.position = objHitInfo.point;
-                //Debug.Log(objHitInfo.point);
-                laserline.SetPosition(1, objHitInfo.point);
-                Debug.DrawRay(headPosition, dir, Color.blue, 1000000);
-            }        
-            sendRaycast = false;
-        }
-    }
+
 }

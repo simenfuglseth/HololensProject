@@ -8,6 +8,10 @@ public class SpeechManager : MonoBehaviour, IMixedRealitySpeechHandler
         //Debugging "play sound" declarations deleted as not important for this example script.
         CoreServices.InputSystem?.RegisterHandler<IMixedRealitySpeechHandler>(this);
     }
+    /// <summary>
+    /// Add custom made word commands to be recongized and event
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnSpeechKeywordRecognized(SpeechEventData eventData)
     {
         Debug.Log("OnSpeechKeywordRecognized");
