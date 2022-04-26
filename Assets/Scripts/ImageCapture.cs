@@ -1,4 +1,3 @@
-
 using System.Linq;
 using System;
 using System.IO;
@@ -13,6 +12,9 @@ public class ImageCapture : MonoBehaviour
     /// Allows this class to behave like a singleton
     /// </summary>
     public static ImageCapture Instance;
+    /// <summary>
+    /// Photo Capture object
+    /// </summary>
 
     PhotoCapture photoCaptureObject = null;
     
@@ -20,7 +22,9 @@ public class ImageCapture : MonoBehaviour
     /// File path of current analysed photo
     /// </summary>
     internal string filePath = string.Empty;
-
+    /// <summary>
+    /// Keep counts of the taps for image renaming
+    /// </summary>
     private int captureCount = 0;
     /// <summary>
     /// Flagging if the capture loop is running
@@ -51,24 +55,13 @@ public class ImageCapture : MonoBehaviour
         }
     }
 
-    //Button to take photo for testing
+    //Button to take photo for testing in unity play
     void OnGUI()
-    {
-        
+    {    
         if (GUI.Button(new Rect(10, 70, 50, 30), "Click"))
-            //captureIsActive = true;
-
-            // Set the cursor color to red
-            //SceneOrganiser.Instance.cursor.GetComponent<Renderer>().material.color = Color.red;
             Invoke("ExecuteImageCaptureAndAnalysis", 0);
-        if (GUI.Button(new Rect(10, 10, 50, 50), "click"))
-            //captureIsActive = true;
-
-            // Set the cursor color to red
-            //SceneOrganiser.Instance.cursor.GetComponent<Renderer>().material.color = Color.red;
-            Introduction.Instance.Invoke("hideIntro", 0);
     }
-
+    
     /// <summary>
     /// Begin process of image capturing and send to Azure Custom Vision Service.
     /// </summary>
