@@ -188,8 +188,7 @@ public class SceneOrganiser : MonoBehaviour
                     laserline.SetPosition(1, objHitInfo.point);
                 }
                 StartCoroutine(FadeLineRenderer());              
-            }
-            
+            }           
         }
         // Reset the color of the cursor
         cursor.GetComponent<Renderer>().material.color = Color.green;
@@ -208,7 +207,8 @@ public class SceneOrganiser : MonoBehaviour
     /// </summary>
     public Vector3 CalculateBoundingBoxPosition(Bounds b, BoundingBox boundingBox)
     {
-        Debug.Log($"BB: left {boundingBox.left}, top {boundingBox.top}, width {boundingBox.width}, height {boundingBox.height}");
+        Debug.Log($"BB: left {boundingBox.left}, top {boundingBox.top}, width " +
+            $"{boundingBox.width}, height {boundingBox.height}");
 
         double centerFromLeft = boundingBox.left + (boundingBox.width / 2);
         double centerFromTop = boundingBox.top + (boundingBox.height / 2);
